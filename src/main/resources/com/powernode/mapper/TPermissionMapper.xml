@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.powernode.mapper.TPermissionMapper">
+
+    <resultMap id="BaseResultMap" type="com.powernode.model.TPermission">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="url" column="url" jdbcType="VARCHAR"/>
+            <result property="type" column="type" jdbcType="VARCHAR"/>
+            <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
+            <result property="orderNo" column="order_no" jdbcType="INTEGER"/>
+            <result property="icon" column="icon" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="PermissionRoleResultMap" type="com.powernode.model.TPermission">
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="code" column="code" jdbcType="VARCHAR"/>
+        <result property="url" column="url" jdbcType="VARCHAR"/>
+        <result property="type" column="type" jdbcType="VARCHAR"/>
+        <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
+        <result property="orderNo" column="order_no" jdbcType="INTEGER"/>
+        <result property="icon" column="icon" jdbcType="VARCHAR"/>
+        <!--一对多，一个父菜单有多个子菜单-->
+        <collection property="subPermissionList" ofType="com.powernode.model.TPermission">
+            <id property="id" column="cid" jdbcType="INTEGER"/>
+            <result property="name" column="cname" jdbcType="VARCHAR"/>
+            <result property="url" column="curl" jdbcType="VARCHAR"/>
+            <result property="icon" column="cicon" jdbcType="VARCHAR"/>
+        </collection>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,name,code,
+        url,type,parent_id,
+        order_no,icon
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from t_permission
+        where  id = #{id,jdbcType=INTEGER} 
+    </select>
+
+    <select id="selectMenuPermissionByUserId" parameterType="java.lang.Integer" resultMap="PermissionRoleResultMap">
+        select tp.*,
+               childTp.id cid, childTp.name cname, childTp.url curl, childTp.icon cicon
+        from t_permission tp
+        left join t_permission childTp on tp.id = childTp.parent_id
+        left join t_role_permission trp on tp.id = trp.permission_id
+        left join t_role tr on trp.role_id = tr.id
+        left join t_user_role tur on tr.id = tur.role_id
+        where
+            tur.id = #{userId,jdbcType=INTEGER} and tp.type = 'menu' and childTp.type = 'menu'
+    </select>
+    <select id="selectButtonPermissionByUserId" parameterType="java.lang.Integer" resultType="com.powernode.model.TPermission">
+        select tp.*
+        from t_permission tp
+        left join t_role_permission trp on tp.id = trp.permission_id
+        left join t_role tr on trp.role_id = tr.id
+        left join t_user_role tur on tr.id = tur.role_id
+        where tur.user_id = #{userId,jdbcType=INTEGER} and tp.type = 'button'
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from t_permission
+        where  id = #{id,jdbcType=INTEGER} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.powernode.model.TPermission" useGeneratedKeys="true">
+        insert into t_permission
+        ( id,name,code
+        ,url,type,parent_id
+        ,order_no,icon)
+        values (#{id,jdbcType=INTEGER},#{name,jdbcType=VARCHAR},#{code,jdbcType=VARCHAR}
+        ,#{url,jdbcType=VARCHAR},#{type,jdbcType=VARCHAR},#{parentId,jdbcType=INTEGER}
+        ,#{orderNo,jdbcType=INTEGER},#{icon,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.powernode.model.TPermission" useGeneratedKeys="true">
+        insert into t_permission
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="name != null">name,</if>
+                <if test="code != null">code,</if>
+                <if test="url != null">url,</if>
+                <if test="type != null">type,</if>
+                <if test="parentId != null">parent_id,</if>
+                <if test="orderNo != null">order_no,</if>
+                <if test="icon != null">icon,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id,jdbcType=INTEGER},</if>
+                <if test="name != null">#{name,jdbcType=VARCHAR},</if>
+                <if test="code != null">#{code,jdbcType=VARCHAR},</if>
+                <if test="url != null">#{url,jdbcType=VARCHAR},</if>
+                <if test="type != null">#{type,jdbcType=VARCHAR},</if>
+                <if test="parentId != null">#{parentId,jdbcType=INTEGER},</if>
+                <if test="orderNo != null">#{orderNo,jdbcType=INTEGER},</if>
+                <if test="icon != null">#{icon,jdbcType=VARCHAR},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.powernode.model.TPermission">
+        update t_permission
+        <set>
+                <if test="name != null">
+                    name = #{name,jdbcType=VARCHAR},
+                </if>
+                <if test="code != null">
+                    code = #{code,jdbcType=VARCHAR},
+                </if>
+                <if test="url != null">
+                    url = #{url,jdbcType=VARCHAR},
+                </if>
+                <if test="type != null">
+                    type = #{type,jdbcType=VARCHAR},
+                </if>
+                <if test="parentId != null">
+                    parent_id = #{parentId,jdbcType=INTEGER},
+                </if>
+                <if test="orderNo != null">
+                    order_no = #{orderNo,jdbcType=INTEGER},
+                </if>
+                <if test="icon != null">
+                    icon = #{icon,jdbcType=VARCHAR},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.powernode.model.TPermission">
+        update t_permission
+        set 
+            name =  #{name,jdbcType=VARCHAR},
+            code =  #{code,jdbcType=VARCHAR},
+            url =  #{url,jdbcType=VARCHAR},
+            type =  #{type,jdbcType=VARCHAR},
+            parent_id =  #{parentId,jdbcType=INTEGER},
+            order_no =  #{orderNo,jdbcType=INTEGER},
+            icon =  #{icon,jdbcType=VARCHAR}
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+</mapper>
